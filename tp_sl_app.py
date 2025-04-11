@@ -21,19 +21,23 @@ if st.button("Analyze"):
         entry_time_local = datetime.strptime(entry_time_str, "%Y-%m-%d %H:%M:%S")
         entry_time_utc = pytz.timezone("Asia/Ho_Chi_Minh").localize(entry_time_local).astimezone(timezone.utc)
 
-        target_ts = int(entry_time_utc.timestamp() * 1000)
-        now_ts = int(datetime.now(timezone.utc).timestamp() * 1000)
-        minutes_diff = int((now_ts - target_ts) / 60000)
-        limit = min(minutes_diff + 1, 1000)
-
-        url = f"https://thingproxy.freeboard.io/fetch/https://api.binance.com/api/v3/klines?symbol={symbol}&interval=1m&limit={limit}"
+        # Use CoinGecko OHLC endpoint as alternative to Binance
+        coingecko_id = symbol.replace("USDT", "").lower()
+        url = f"https://api.coingecko.com/api/v3/coins/{coingecko_id}/ohlc?vs_currency=usd&days=1"
         res = requests.get(url)
         if res.status_code != 200:
             st.error(f"Failed to fetch data: {res.status_code}")
             st.stop()
 
-        klines = res.json()
+        ohlc_data = res.json()
+        if not ohlc_data:
+            st.warning("No OHLC data found.")
+            st.stop()
 
+        # Convert OHLC to matching format (timestamp, open, high, low, close)
+        klines = [[int(k[0]), k[1], k[2], k[3], k[4]] for k in ohlc_data]
+
+        target_ts = int(entry_time_utc.timestamp() * 1000)
         entry_price = None
         for k in klines:
             if int(k[0]) <= target_ts < int(k[0]) + 60000:
