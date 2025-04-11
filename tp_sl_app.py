@@ -26,7 +26,7 @@ if st.button("Analyze"):
         minutes_diff = int((now_ts - target_ts) / 60000)
         limit = min(minutes_diff + 1, 1000)
 
-        url = f"https://api.binance.com/api/v3/klines?symbol={symbol}&interval=1m&limit={limit}"
+        url = f"https://thingproxy.freeboard.io/fetch/https://api.binance.com/api/v3/klines?symbol={symbol}&interval=1m&limit={limit}"
         res = requests.get(url)
         if res.status_code != 200:
             st.error(f"Failed to fetch data: {res.status_code}")
